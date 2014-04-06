@@ -21,16 +21,29 @@
 #include "Finder.hpp"
 
 #include <iostream>
+#include <map>
+#include <string>
 
-#include <clang/Basic/SourceLocation.h>
-#include <clang/Basic/SourceManager.h>
+#include <clang/AST/Decl.h>
 
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 
+#include "FuncInfo.hpp"
+
+using namespace clang;
 using namespace clang::ast_matchers;
 
+typedef std::map<std::string, FuncInfo> Funcs;
+
 static DeclarationMatcher funcDecl = functionDecl().bind("func");
-static StatementMatcher invocation = callExpr().bind("call");
+static StatementMatcher funcRef =
+    declRefExpr(              // referencing a variable/declaration
+        to(                   // something that is ...
+            functionDecl(     // ... a function
+
+            )
+        )
+    ).bind("ref");            // bind matched function ref to "ref" name
 
 namespace
 {
@@ -40,61 +53,66 @@ class MatchHelper : public MatchFinder::MatchCallback
     typedef MatchFinder::MatchResult Result;
 
 public:
+    MatchHelper(std::map<std::string, FuncInfo> &funcs);
+
+public:
     virtual void run(const Result &result);
 
 private:
-    void printOut(const Result &result, const clang::CallExpr *call) const;
+    Funcs::iterator registerFunc(const Result &result,
+                                 const FunctionDecl *func) const;
 
-    void printOut(const Result &result, const clang::FunctionDecl *func) const;
+    void registerRef(const Result &result, const DeclRefExpr *ref) const;
+
+private:
+    Funcs &funcs;
 };
+
+MatchHelper::MatchHelper(std::map<std::string, FuncInfo> &funcs)
+    :funcs(funcs)
+{
+}
 
 void
 MatchHelper::run(const Result &result)
 {
-    typedef clang::FunctionDecl Func;
-    typedef clang::CallExpr Call;
+    typedef FunctionDecl Func;
+    typedef DeclRefExpr Ref;
 
     if (const Func *func = result.Nodes.getNodeAs<Func>("func")) {
-        if (func->isExternallyVisible()) {
-            printOut(result, func);
-        }
-    } else if (const Call *call = result.Nodes.getNodeAs<Call>("call")) {
-        printOut(result, call);
+        static_cast<void>(registerFunc(result, func));
+    } else if (const Ref *ref = result.Nodes.getNodeAs<Ref>("ref")) {
+        registerRef(result, ref);
+    }
+}
+
+Funcs::iterator
+MatchHelper::registerFunc(const Result &result, const FunctionDecl *func) const
+{
+    if (!func->isExternallyVisible() || func->isMain()) {
+        return Funcs::iterator();
+    }
+
+    const Funcs::iterator it = funcs.find(func->getNameAsString());
+    if (it == funcs.end()) {
+        const std::string &name = func->getNameAsString();
+        FuncInfo info(func, result.SourceManager);
+        return funcs.insert(std::make_pair(name, info)).first;
+    } else {
+        it->second.processDeclaration(func, result.SourceManager);
+        return it;
     }
 }
 
 void
-MatchHelper::printOut(const Result &result,
-                      const clang::CallExpr *call) const
+MatchHelper::registerRef(const Result &result, const DeclRefExpr *ref) const
 {
-    clang::FullSourceLoc fullLoc(call->getLocStart(), *result.SourceManager);
-
-    const std::string &fileName = result.SourceManager->getFilename(fullLoc);
-    const unsigned int lineNum = fullLoc.getSpellingLineNumber();
-
-    std::cout << fileName
-                << ":"
-                << lineNum
-                << ":call of "
-                << call->getDirectCallee()->getNameAsString()
-                << '\n';
-}
-
-void
-MatchHelper::printOut(const Result &result,
-                      const clang::FunctionDecl *func) const
-{
-    clang::FullSourceLoc fullLoc(func->getLocStart(), *result.SourceManager);
-
-    const std::string &fileName = result.SourceManager->getFilename(fullLoc);
-    const unsigned int lineNum = fullLoc.getSpellingLineNumber();
-
-    std::cout << fileName
-                << ":"
-                << lineNum
-                << ":declaration of "
-                << func->getNameAsString()
-                << '\n';
+    if (const FunctionDecl *func = ref->getDecl()->getAsFunction()) {
+        const Funcs::iterator it = registerFunc(result, func);
+        if (it != Funcs::iterator()) {
+            it->second.registerRef(ref, result.SourceManager);
+        }
+    }
 }
 
 }
@@ -103,19 +121,37 @@ class Finder::Impl
 {
 public:
     Impl();
+    ~Impl();
 
 public:
     MatchFinder & getMatchFinder();
 
 private:
+    Funcs funcs;
     MatchHelper helper;
     MatchFinder matchFinder;
 };
 
 Finder::Impl::Impl()
+    :helper(funcs)
 {
     matchFinder.addMatcher(funcDecl, &helper);
-    matchFinder.addMatcher(invocation, &helper);
+    matchFinder.addMatcher(funcRef, &helper);
+}
+
+Finder::Impl::~Impl()
+{
+    for (Funcs::const_iterator cit = funcs.begin(); cit != funcs.end(); ++cit) {
+        const FuncInfo &funcInfo = cit->second;
+
+        if (funcInfo.isFullyDeclared()) {
+            if (funcInfo.isUnused()) {
+                std::cout << funcInfo << ":unused\n";
+            } else if (funcInfo.canBeMadeStatic()) {
+                std::cout << funcInfo << ":can be made static\n";
+            }
+        }
+    }
 }
 
 Finder::MatchFinder &
