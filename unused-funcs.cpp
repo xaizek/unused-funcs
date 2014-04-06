@@ -20,6 +20,8 @@
 
 #include <llvm/Support/CommandLine.h>
 
+#include <clang/Basic/Diagnostic.h>
+
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
 
@@ -38,7 +40,17 @@ main(int argc, const char *argv[])
     ClangTool tool(optionsParser.getCompilations(),
                    optionsParser.getSourcePathList());
 
-    Finder finder;
+    class : public clang::DiagnosticConsumer
+    {
+    public:
+        virtual bool
+        IncludeInDiagnosticCounts() const
+        {
+            return false;
+        }
+    } diagConsumer;
+    tool.setDiagnosticConsumer(&diagConsumer);
 
+    Finder finder;
     return tool.run(newFrontendActionFactory(&finder.getMatchFinder()));
 }
