@@ -18,27 +18,33 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <llvm/Support/CommandLine.h>
+#ifndef UNUSED_FUNCS__FINDER_HPP__
+#define UNUSED_FUNCS__FINDER_HPP__
 
-#include <clang/Tooling/CommonOptionsParser.h>
-#include <clang/Tooling/Tooling.h>
+#include <memory>
 
-#include "Finder.hpp"
+#include <clang/ASTMatchers/ASTMatchFinder.h>
 
-using namespace clang::tooling;
-
-static llvm::cl::OptionCategory toolCategory("unused-funcs options");
-
-static llvm::cl::extrahelp commonHelp(CommonOptionsParser::HelpMessage);
-
-int
-main(int argc, const char *argv[])
+class Finder
 {
-    CommonOptionsParser optionsParser(argc, argv, toolCategory);
-    ClangTool tool(optionsParser.getCompilations(),
-                   optionsParser.getSourcePathList());
+    typedef clang::ast_matchers::MatchFinder MatchFinder;
 
-    Finder finder;
+public:
+    Finder();
+    ~Finder();
 
-    return tool.run(newFrontendActionFactory(&finder.getMatchFinder()));
-}
+public:
+    MatchFinder & getMatchFinder();
+
+private:
+    // these operations are forbidden
+    Finder(const Finder &rhs);
+    Finder & operator=(const Finder &rhs);
+
+private:
+    class Impl;
+
+    const std::auto_ptr<Impl> impl;
+};
+
+#endif // UNUSED_FUNCS__FINDER_HPP__
