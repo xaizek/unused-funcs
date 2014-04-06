@@ -22,6 +22,8 @@
 
 #include <clang/Basic/Diagnostic.h>
 
+#include <clang/ASTMatchers/ASTMatchFinder.h>
+
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
 

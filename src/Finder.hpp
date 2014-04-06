@@ -23,7 +23,13 @@
 
 #include <memory>
 
-#include <clang/ASTMatchers/ASTMatchFinder.h>
+namespace clang
+{
+    namespace ast_matchers
+    {
+        class MatchFinder;
+    }
+}
 
 class Finder
 {
