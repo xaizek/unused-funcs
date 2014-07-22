@@ -54,5 +54,5 @@ main(int argc, const char *argv[])
     tool.setDiagnosticConsumer(&diagConsumer);
 
     Finder finder;
-    return tool.run(newFrontendActionFactory(&finder.getMatchFinder()));
+    return tool.run(newFrontendActionFactory(&finder.getMatchFinder()).get());
 }
