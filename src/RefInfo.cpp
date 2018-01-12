@@ -20,18 +20,25 @@
 
 #include "RefInfo.hpp"
 
+#include <clang/AST/Expr.h>
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
 
-#include <clang/AST/Expr.h>
 
-RefInfo::RefInfo(const clang::DeclRefExpr *ref, const clang::SourceManager *sm)
-{
+namespace {
+std::string getFilename(const clang::DeclRefExpr *ref,
+                        const clang::SourceManager *sm) {
     clang::FullSourceLoc fullLoc(ref->getExprLoc(), *sm);
-    fileName = sm->getFilename(fullLoc);
+    return sm->getFilename(fullLoc);
+}
+}  // namespace
+
+
+RefInfo::RefInfo(const clang::DeclRefExpr *ref,
+                 const clang::SourceManager *sm)
+    : fileName(getFilename(ref, sm)) {
 }
 
-bool RefInfo::isInThisUnit(const std::string& other) const
-{
-    return other == fileName;
+bool RefInfo::isInThisUnit(const std::string &other) const {
+  return other == fileName;
 }

@@ -25,153 +25,115 @@
 #include <string>
 
 #include <clang/AST/Decl.h>
-
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/ASTMatchers/ASTMatchers.h>
 
 #include "FuncInfo.hpp"
 
+namespace {
+
 using namespace clang;
 using namespace clang::ast_matchers;
 
-typedef std::map<std::string, FuncInfo> Funcs;
+using Funcs = std::map<std::string, FuncInfo>;
 
-static DeclarationMatcher funcDecl = functionDecl().bind("func");
-static StatementMatcher funcRef =
-    declRefExpr(              // referencing a variable/declaration
-        to(                   // something that is ...
-            functionDecl(     // ... a function
-
-            )
-        )
-    ).bind("ref");            // bind matched function ref to "ref" name
-
-namespace
-{
-
-class MatchHelper : public MatchFinder::MatchCallback
-{
-    typedef MatchFinder::MatchResult Result;
+class MatchHelper : public MatchFinder::MatchCallback {
+  using Result = MatchFinder::MatchResult;
 
 public:
-    MatchHelper(std::map<std::string, FuncInfo> &funcs);
+  MatchHelper(Funcs &funcs);
 
-public:
-    virtual void run(const Result &result);
-
-private:
-    Funcs::iterator registerFunc(const Result &result,
-                                 const FunctionDecl *func) const;
-
-    void registerRef(const Result &result, const DeclRefExpr *ref) const;
+  void run(const Result &result) override;
 
 private:
-    Funcs &funcs;
+  Funcs::iterator registerFunc(const Result &result,
+                               const FunctionDecl *func) const;
+
+  void registerRef(const Result &result, const DeclRefExpr *ref) const;
+
+  Funcs &funcs;
 };
 
-MatchHelper::MatchHelper(std::map<std::string, FuncInfo> &funcs)
-    :funcs(funcs)
-{
+MatchHelper::MatchHelper(Funcs &funcs)
+    : funcs(funcs) {}
+
+void MatchHelper::run(const Result &result) {
+  using Func = FunctionDecl;
+  using Ref = DeclRefExpr;
+
+  if (const auto func = result.Nodes.getNodeAs<Func>("func")) {
+    static_cast<void>(registerFunc(result, func));
+  } else if (const auto ref = result.Nodes.getNodeAs<Ref>("ref")) {
+    registerRef(result, ref);
+  }
 }
 
-void
-MatchHelper::run(const Result &result)
-{
-    typedef FunctionDecl Func;
-    typedef DeclRefExpr Ref;
+Funcs::iterator MatchHelper::registerFunc(const Result &result,
+                                          const FunctionDecl *func) const {
+  if (!func->isExternallyVisible() || func->isMain()) {
+    return {};
+  }
 
-    if (const Func *func = result.Nodes.getNodeAs<Func>("func")) {
-        static_cast<void>(registerFunc(result, func));
-    } else if (const Ref *ref = result.Nodes.getNodeAs<Ref>("ref")) {
-        registerRef(result, ref);
+  const auto it = funcs.find(func->getNameAsString());
+  if (it == funcs.end()) {
+    const auto name = func->getNameAsString();
+    FuncInfo info(func, result.SourceManager);
+    return funcs.insert(std::make_pair(name, info)).first;
+  }
+  it->second.processDeclaration(func, result.SourceManager);
+  return it;
+}
+
+void MatchHelper::registerRef(const Result &result,
+                              const DeclRefExpr *ref) const {
+  if (const auto func = ref->getDecl()->getAsFunction()) {
+    const auto it = registerFunc(result, func);
+    if (it != Funcs::iterator()) {
+      it->second.registerRef(ref, result.SourceManager);
     }
+  }
 }
 
-Funcs::iterator
-MatchHelper::registerFunc(const Result &result, const FunctionDecl *func) const
-{
-    if (!func->isExternallyVisible() || func->isMain()) {
-        return Funcs::iterator();
-    }
+} // namespace
 
-    const Funcs::iterator it = funcs.find(func->getNameAsString());
-    if (it == funcs.end()) {
-        const std::string &name = func->getNameAsString();
-        FuncInfo info(func, result.SourceManager);
-        return funcs.insert(std::make_pair(name, info)).first;
-    } else {
-        it->second.processDeclaration(func, result.SourceManager);
-        return it;
-    }
-}
-
-void
-MatchHelper::registerRef(const Result &result, const DeclRefExpr *ref) const
-{
-    if (const FunctionDecl *func = ref->getDecl()->getAsFunction()) {
-        const Funcs::iterator it = registerFunc(result, func);
-        if (it != Funcs::iterator()) {
-            it->second.registerRef(ref, result.SourceManager);
-        }
-    }
-}
-
-}
-
-class Finder::Impl
-{
+class Finder::Impl {
 public:
-    Impl();
-    ~Impl();
+  Impl();
+  ~Impl();
 
 public:
-    MatchFinder & getMatchFinder();
+  MatchFinder &getMatchFinder();
 
 private:
-    Funcs funcs;
-    MatchHelper helper;
-    MatchFinder matchFinder;
+  Funcs funcs;
+  MatchHelper helper;
+  MatchFinder matchFinder;
 };
 
-Finder::Impl::Impl()
-    :helper(funcs)
-{
-    matchFinder.addMatcher(funcDecl, &helper);
-    matchFinder.addMatcher(funcRef, &helper);
+Finder::Impl::Impl() : helper(funcs) {
+  const auto funcDecl = functionDecl().bind("func");
+  matchFinder.addMatcher(funcDecl, &helper);
+  const auto funcRef = declRefExpr(to(functionDecl())).bind("ref");
+  matchFinder.addMatcher(funcRef, &helper);
 }
 
-Finder::Impl::~Impl()
-{
-    for (Funcs::const_iterator cit = funcs.begin(); cit != funcs.end(); ++cit) {
-        const FuncInfo &funcInfo = cit->second;
+Finder::Impl::~Impl() {
+  for (auto & func : funcs) {
+    const auto &funcInfo = func.second;
 
-        if (funcInfo.isFullyDeclared()) {
-            if (funcInfo.isUnused()) {
-                std::cout << funcInfo << ":unused\n";
-            } else if (funcInfo.canBeMadeStatic()) {
-                std::cout << funcInfo << ":can be made static\n";
-            }
-        }
+    if (funcInfo.isFullyDeclared()) {
+      if (funcInfo.isUnused()) {
+        std::cout << funcInfo << ": unused\n";
+      } else if (funcInfo.canBeMadeStatic()) {
+        std::cout << funcInfo << ": can be made static\n";
+      }
     }
+  }
 }
 
-Finder::MatchFinder &
-Finder::Impl::getMatchFinder()
-{
-    return matchFinder;
-}
+MatchFinder &Finder::Impl::getMatchFinder() { return matchFinder; }
 
-Finder::Finder()
-    :impl(new Impl())
-{
-}
+Finder::Finder() : impl(llvm::make_unique<Impl>()) {}
+Finder::~Finder() = default;
 
-Finder::~Finder()
-{
-}
-
-Finder::MatchFinder &
-Finder::getMatchFinder()
-{
-    return impl->getMatchFinder();
-}
+MatchFinder &Finder::getMatchFinder() { return impl->getMatchFinder(); }

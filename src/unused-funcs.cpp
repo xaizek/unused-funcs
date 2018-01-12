@@ -18,41 +18,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <llvm/Support/CommandLine.h>
-
-#include <clang/Basic/Diagnostic.h>
-
 #include <clang/ASTMatchers/ASTMatchFinder.h>
-
+#include <clang/Basic/Diagnostic.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
+#include <llvm/Support/CommandLine.h>
 
 #include "Finder.hpp"
 
-using namespace clang::tooling;
+namespace ct = clang::tooling;
 
-static llvm::cl::OptionCategory toolCategory("unused-funcs options");
+namespace {
+  class CustomDiagnosticConsumer: public clang::DiagnosticConsumer {
+  public:
+    bool IncludeInDiagnosticCounts() const override { return false; }
+  };
+}  // namespace
 
-static llvm::cl::extrahelp commonHelp(CommonOptionsParser::HelpMessage);
+static llvm::cl::extrahelp commonHelp(ct::CommonOptionsParser::HelpMessage);
 
-int
-main(int argc, const char *argv[])
-{
-    CommonOptionsParser optionsParser(argc, argv, toolCategory);
-    ClangTool tool(optionsParser.getCompilations(),
-                   optionsParser.getSourcePathList());
+int main(int argc, const char *argv[]) {
+  llvm::cl::OptionCategory toolCategory("unused-funcs options");
+  ct::CommonOptionsParser optionsParser(argc, argv, toolCategory);
+  ct::ClangTool tool(optionsParser.getCompilations(),
+                     optionsParser.getSourcePathList());
 
-    class : public clang::DiagnosticConsumer
-    {
-    public:
-        virtual bool
-        IncludeInDiagnosticCounts() const
-        {
-            return false;
-        }
-    } diagConsumer;
-    tool.setDiagnosticConsumer(&diagConsumer);
+  CustomDiagnosticConsumer diagConsumer;
+  tool.setDiagnosticConsumer(&diagConsumer);
 
-    Finder finder;
-    return tool.run(newFrontendActionFactory(&finder.getMatchFinder()).get());
+  Finder finder;
+  return tool.run(ct::newFrontendActionFactory(&finder.getMatchFinder()).get());
 }
