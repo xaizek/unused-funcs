@@ -21,7 +21,8 @@
 #ifndef UNUSED_FUNCS__FUNCINFO_HPP__
 #define UNUSED_FUNCS__FUNCINFO_HPP__
 
-#include <iosfwd>
+#include <llvm/Support/raw_ostream.h>
+
 #include <string>
 #include <vector>
 
@@ -36,7 +37,7 @@ class SourceManager;
 
 
 class FuncInfo {
-  friend std::ostream &operator<<(std::ostream &os, const FuncInfo &fi);
+  friend llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const FuncInfo &fi);
 
 public:
   FuncInfo(const clang::FunctionDecl *func, const clang::SourceManager *sm);
@@ -57,6 +58,6 @@ private:
   Refs calls;
 };
 
-std::ostream &operator<<(std::ostream &os, const FuncInfo &fi);
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const FuncInfo &fi);
 
 #endif // UNUSED_FUNCS__FUNCINFO_HPP__

@@ -25,8 +25,6 @@
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
 
-#include <iostream>
-
 FuncInfo::FuncInfo(const clang::FunctionDecl *func,
                    const clang::SourceManager *sm)
     : name(func->getNameAsString()), lineNum(0U) {
@@ -62,6 +60,6 @@ bool FuncInfo::canBeMadeStatic() const {
   return true;
 }
 
-std::ostream &operator<<(std::ostream &os, const FuncInfo &fi) {
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const FuncInfo &fi) {
   return os << fi.fileName << ':' << fi.lineNum << ':' << fi.name;
 }

@@ -20,7 +20,6 @@
 
 #include "Finder.hpp"
 
-#include <iostream>
 #include <map>
 #include <string>
 
@@ -123,9 +122,9 @@ Finder::Impl::~Impl() {
 
     if (funcInfo.isFullyDeclared()) {
       if (funcInfo.isUnused()) {
-        std::cout << funcInfo << ": unused\n";
+        llvm::outs() << funcInfo << ": unused\n";
       } else if (funcInfo.canBeMadeStatic()) {
-        std::cout << funcInfo << ": can be made static\n";
+        llvm::outs() << funcInfo << ": can be made static\n";
       }
     }
   }
