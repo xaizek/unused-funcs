@@ -27,43 +27,36 @@
 
 #include "RefInfo.hpp"
 
-namespace clang
-{
-    class FunctionDecl;
-    class DeclRefExpr;
-    class SourceManager;
-}
 
-class FuncInfo
-{
-    friend std::ostream & operator<<(std::ostream &os, const FuncInfo &fi);
+namespace clang {
+class FunctionDecl;
+class DeclRefExpr;
+class SourceManager;
+} // namespace clang
 
-public:
-    FuncInfo(const clang::FunctionDecl *func, const clang::SourceManager *sm);
+
+class FuncInfo {
+  friend std::ostream &operator<<(std::ostream &os, const FuncInfo &fi);
 
 public:
-    void processDeclaration(const clang::FunctionDecl *func,
-                            const clang::SourceManager *sm);
+  FuncInfo(const clang::FunctionDecl *func, const clang::SourceManager *sm);
 
-    bool isFullyDeclared() const;
-
-    void registerRef(const clang::DeclRefExpr *ref,
-                     const clang::SourceManager *sm);
-
-    bool isUnused() const;
-
-    bool canBeMadeStatic() const;
+  void processDeclaration(const clang::FunctionDecl *func,
+                          const clang::SourceManager *sm);
+  bool isFullyDeclared() const;
+  void registerRef(const clang::DeclRefExpr *ref,
+                   const clang::SourceManager *sm);
+  bool isUnused() const;
+  bool canBeMadeStatic() const;
 
 private:
-    const std::string name;
-
-    std::string fileName;
-    unsigned int lineNum;
-
-    typedef std::vector<RefInfo> Refs;
-    Refs calls;
+  const std::string name;
+  std::string fileName;
+  unsigned int lineNum;
+  typedef std::vector<RefInfo> Refs;
+  Refs calls;
 };
 
-std::ostream & operator<<(std::ostream &os, const FuncInfo &fi);
+std::ostream &operator<<(std::ostream &os, const FuncInfo &fi);
 
 #endif // UNUSED_FUNCS__FUNCINFO_HPP__

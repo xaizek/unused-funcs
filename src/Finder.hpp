@@ -23,34 +23,24 @@
 
 #include <memory>
 
-namespace clang
-{
-    namespace ast_matchers
-    {
-        class MatchFinder;
-    }
-}
 
-class Finder
-{
-    typedef clang::ast_matchers::MatchFinder MatchFinder;
+namespace clang {
+namespace ast_matchers {
+class MatchFinder;
+}  // namespace ast_matchers
+}  // namespace clang
 
+
+class Finder {
 public:
-    Finder();
-    ~Finder();
+  Finder();
+  ~Finder();
 
-public:
-    MatchFinder & getMatchFinder();
+  clang::ast_matchers::MatchFinder &getMatchFinder();
 
 private:
-    // these operations are forbidden
-    Finder(const Finder &rhs);
-    Finder & operator=(const Finder &rhs);
-
-private:
-    class Impl;
-
-    const std::auto_ptr<Impl> impl;
+  class Impl;
+  const std::unique_ptr<Impl> impl;
 };
 
 #endif // UNUSED_FUNCS__FINDER_HPP__

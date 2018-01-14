@@ -23,22 +23,22 @@
 
 #include <string>
 
-namespace clang
-{
-    class DeclRefExpr;
-    class SourceManager;
-}
 
-class RefInfo
-{
+namespace clang {
+class DeclRefExpr;
+class SourceManager;
+} // namespace clang
+
+
+class RefInfo {
 public:
-    RefInfo(const clang::DeclRefExpr *ref, const clang::SourceManager *sm);
+  RefInfo(const clang::DeclRefExpr *ref, const clang::SourceManager *sm);
 
 public:
-    bool isInThisUnit(const std::string& other) const;
+  bool isInThisUnit(const std::string &other) const;
 
 private:
-    std::string fileName;
+  const std::string fileName;
 };
 
 #endif // UNUSED_FUNCS__REFINFO_HPP__
