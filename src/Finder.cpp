@@ -93,14 +93,13 @@ void MatchHelper::registerRef(const Result &result,
   }
 }
 
-} // namespace
+}  // namespace
 
 class Finder::Impl {
 public:
   Impl();
   ~Impl();
 
-public:
   MatchFinder &getMatchFinder();
 
 private:

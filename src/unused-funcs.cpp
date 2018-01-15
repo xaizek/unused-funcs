@@ -43,7 +43,6 @@ int main(int argc, const char *argv[]) {
   ct::CommonOptionsParser optionsParser(argc, argv, toolCategory);
   ct::ClangTool tool(optionsParser.getCompilations(),
                      optionsParser.getSourcePathList());
-
   CustomDiagnosticConsumer diagConsumer;
   tool.setDiagnosticConsumer(&diagConsumer);
 
