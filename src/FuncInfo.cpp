@@ -52,7 +52,7 @@ void FuncInfo::registerRef(const clang::DeclRefExpr &ref,
 bool FuncInfo::isUnused() const { return calls.empty(); }
 
 bool FuncInfo::canBeMadeStatic() const {
-  for (const auto & call : calls) {
+  for (const auto &call : calls) {
     if (!call.isInThisUnit(fileName)) {
       return false;
     }

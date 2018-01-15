@@ -23,12 +23,10 @@
 
 #include <string>
 
-
 namespace clang {
 class DeclRefExpr;
 class SourceManager;
 } // namespace clang
-
 
 class RefInfo {
 public:

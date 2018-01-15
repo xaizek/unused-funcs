@@ -30,11 +30,11 @@
 namespace ct = clang::tooling;
 
 namespace {
-  class CustomDiagnosticConsumer: public clang::DiagnosticConsumer {
-  public:
-    bool IncludeInDiagnosticCounts() const override { return false; }
-  };
-}  // namespace
+class CustomDiagnosticConsumer : public clang::DiagnosticConsumer {
+public:
+  bool IncludeInDiagnosticCounts() const override { return false; }
+};
+} // namespace
 
 static llvm::cl::extrahelp commonHelp(ct::CommonOptionsParser::HelpMessage);
 

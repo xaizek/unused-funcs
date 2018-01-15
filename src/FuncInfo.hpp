@@ -28,16 +28,15 @@
 
 #include "RefInfo.hpp"
 
-
 namespace clang {
 class FunctionDecl;
 class DeclRefExpr;
 class SourceManager;
 } // namespace clang
 
-
 class FuncInfo {
-  friend llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const FuncInfo &fi);
+  friend llvm::raw_ostream &operator<<(llvm::raw_ostream &os,
+                                       const FuncInfo &fi);
 
 public:
   FuncInfo(const clang::FunctionDecl &func, const clang::SourceManager &sm);
@@ -53,7 +52,7 @@ public:
 private:
   const std::string name;
   std::string fileName;
-  unsigned int lineNum {0};
+  unsigned int lineNum{0};
   typedef std::vector<RefInfo> Refs;
   Refs calls;
 };

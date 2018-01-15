@@ -47,14 +47,12 @@ public:
 private:
   Funcs::iterator registerFunc(const FunctionDecl &func,
                                const SourceManager &sm) const;
-  void registerRef(const DeclRefExpr &ref,
-                   const SourceManager &sm) const;
+  void registerRef(const DeclRefExpr &ref, const SourceManager &sm) const;
 
   Funcs &funcs;
 };
 
-MatchHelper::MatchHelper(Funcs &funcs)
-    : funcs(funcs) {}
+MatchHelper::MatchHelper(Funcs &funcs) : funcs(funcs) {}
 
 void MatchHelper::run(const Result &result) {
   using Func = FunctionDecl;
@@ -93,7 +91,7 @@ void MatchHelper::registerRef(const DeclRefExpr &ref,
   }
 }
 
-}  // namespace
+} // namespace
 
 class Finder::Impl {
 public:
@@ -116,7 +114,7 @@ Finder::Impl::Impl() : helper(funcs) {
 }
 
 Finder::Impl::~Impl() {
-  for (auto & func : funcs) {
+  for (auto &func : funcs) {
     const auto &funcInfo = func.second;
 
     if (funcInfo.isFullyDeclared()) {
