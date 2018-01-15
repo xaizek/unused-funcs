@@ -25,27 +25,27 @@
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
 
-FuncInfo::FuncInfo(const clang::FunctionDecl *func,
-                   const clang::SourceManager *sm)
-    : name(func->getNameAsString()) {
+FuncInfo::FuncInfo(const clang::FunctionDecl &func,
+                   const clang::SourceManager &sm)
+    : name(func.getNameAsString()) {
   processDeclaration(func, sm);
 }
 
-void FuncInfo::processDeclaration(const clang::FunctionDecl *func,
-                                  const clang::SourceManager *sm) {
-  if (isFullyDeclared() || !func->isThisDeclarationADefinition()) {
+void FuncInfo::processDeclaration(const clang::FunctionDecl &func,
+                                  const clang::SourceManager &sm) {
+  if (isFullyDeclared() || !func.isThisDeclarationADefinition()) {
     return;
   }
 
-  clang::FullSourceLoc fullLoc(func->getNameInfo().getBeginLoc(), *sm);
-  fileName = sm->getFilename(fullLoc);
+  clang::FullSourceLoc fullLoc(func.getNameInfo().getBeginLoc(), sm);
+  fileName = sm.getFilename(fullLoc);
   lineNum = fullLoc.getSpellingLineNumber();
 }
 
 bool FuncInfo::isFullyDeclared() const { return lineNum != 0U; }
 
-void FuncInfo::registerRef(const clang::DeclRefExpr *ref,
-                           const clang::SourceManager *sm) {
+void FuncInfo::registerRef(const clang::DeclRefExpr &ref,
+                           const clang::SourceManager &sm) {
   calls.emplace_back(ref, sm);
 }
 

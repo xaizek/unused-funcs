@@ -40,13 +40,13 @@ class FuncInfo {
   friend llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const FuncInfo &fi);
 
 public:
-  FuncInfo(const clang::FunctionDecl *func, const clang::SourceManager *sm);
+  FuncInfo(const clang::FunctionDecl &func, const clang::SourceManager &sm);
 
-  void processDeclaration(const clang::FunctionDecl *func,
-                          const clang::SourceManager *sm);
+  void processDeclaration(const clang::FunctionDecl &func,
+                          const clang::SourceManager &sm);
   bool isFullyDeclared() const;
-  void registerRef(const clang::DeclRefExpr *ref,
-                   const clang::SourceManager *sm);
+  void registerRef(const clang::DeclRefExpr &ref,
+                   const clang::SourceManager &sm);
   bool isUnused() const;
   bool canBeMadeStatic() const;
 

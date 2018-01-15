@@ -26,16 +26,16 @@
 
 
 namespace {
-std::string getFilename(const clang::DeclRefExpr *ref,
-                        const clang::SourceManager *sm) {
-    clang::FullSourceLoc fullLoc(ref->getExprLoc(), *sm);
-    return sm->getFilename(fullLoc);
+std::string getFilename(const clang::DeclRefExpr &ref,
+                        const clang::SourceManager &sm) {
+    clang::FullSourceLoc fullLoc(ref.getExprLoc(), sm);
+    return sm.getFilename(fullLoc);
 }
 }  // namespace
 
 
-RefInfo::RefInfo(const clang::DeclRefExpr *ref,
-                 const clang::SourceManager *sm)
+RefInfo::RefInfo(const clang::DeclRefExpr &ref,
+                 const clang::SourceManager &sm)
     : fileName(getFilename(ref, sm)) {
 }
 
