@@ -53,7 +53,7 @@ public:
 private:
   const std::string name;
   std::string fileName;
-  unsigned int lineNum;
+  unsigned int lineNum {0};
   typedef std::vector<RefInfo> Refs;
   Refs calls;
 };

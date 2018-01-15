@@ -27,7 +27,7 @@
 
 FuncInfo::FuncInfo(const clang::FunctionDecl *func,
                    const clang::SourceManager *sm)
-    : name(func->getNameAsString()), lineNum(0U) {
+    : name(func->getNameAsString()) {
   processDeclaration(func, sm);
 }
 
