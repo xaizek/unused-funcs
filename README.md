@@ -1,3 +1,11 @@
+Note
+----
+
+The code was "modernized" (the term is too ambiguous and subjective to take it
+seriously) and thus has slightly diverged from the way it's presented in the
+post.  Original tree that corresponds to the text can be browsed
+[here](https://github.com/xaizek/unused-funcs/tree/post).
+
 Brief description
 -----------------
 
