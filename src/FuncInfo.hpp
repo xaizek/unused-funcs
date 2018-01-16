@@ -21,12 +21,12 @@
 #ifndef UNUSED_FUNCS__FUNCINFO_HPP__
 #define UNUSED_FUNCS__FUNCINFO_HPP__
 
-#include <iosfwd>
+#include <llvm/Support/raw_ostream.h>
+
 #include <string>
 #include <vector>
 
 #include "RefInfo.hpp"
-
 
 namespace clang {
 class FunctionDecl;
@@ -34,29 +34,29 @@ class DeclRefExpr;
 class SourceManager;
 } // namespace clang
 
-
 class FuncInfo {
-  friend std::ostream &operator<<(std::ostream &os, const FuncInfo &fi);
+  friend llvm::raw_ostream &operator<<(llvm::raw_ostream &os,
+                                       const FuncInfo &fi);
 
 public:
-  FuncInfo(const clang::FunctionDecl *func, const clang::SourceManager *sm);
+  FuncInfo(const clang::FunctionDecl &func, const clang::SourceManager &sm);
 
-  void processDeclaration(const clang::FunctionDecl *func,
-                          const clang::SourceManager *sm);
+  void processDeclaration(const clang::FunctionDecl &func,
+                          const clang::SourceManager &sm);
   bool isFullyDeclared() const;
-  void registerRef(const clang::DeclRefExpr *ref,
-                   const clang::SourceManager *sm);
+  void registerRef(const clang::DeclRefExpr &ref,
+                   const clang::SourceManager &sm);
   bool isUnused() const;
   bool canBeMadeStatic() const;
 
 private:
   const std::string name;
   std::string fileName;
-  unsigned int lineNum;
+  unsigned int lineNum{0};
   typedef std::vector<RefInfo> Refs;
   Refs calls;
 };
 
-std::ostream &operator<<(std::ostream &os, const FuncInfo &fi);
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const FuncInfo &fi);
 
 #endif // UNUSED_FUNCS__FUNCINFO_HPP__

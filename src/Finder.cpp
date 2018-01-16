@@ -20,13 +20,13 @@
 
 #include "Finder.hpp"
 
-#include <iostream>
 #include <map>
 #include <string>
 
 #include <clang/AST/Decl.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/ASTMatchers/ASTMatchers.h>
+#include <clang/Basic/SourceManager.h>
 
 #include "FuncInfo.hpp"
 
@@ -42,54 +42,51 @@ class MatchHelper : public MatchFinder::MatchCallback {
 
 public:
   MatchHelper(Funcs &funcs);
-
   void run(const Result &result) override;
 
 private:
-  Funcs::iterator registerFunc(const Result &result,
-                               const FunctionDecl *func) const;
-
-  void registerRef(const Result &result, const DeclRefExpr *ref) const;
+  Funcs::iterator registerFunc(const FunctionDecl &func,
+                               const SourceManager &sm) const;
+  void registerRef(const DeclRefExpr &ref, const SourceManager &sm) const;
 
   Funcs &funcs;
 };
 
-MatchHelper::MatchHelper(Funcs &funcs)
-    : funcs(funcs) {}
+MatchHelper::MatchHelper(Funcs &funcs) : funcs(funcs) {}
 
 void MatchHelper::run(const Result &result) {
   using Func = FunctionDecl;
   using Ref = DeclRefExpr;
 
   if (const auto func = result.Nodes.getNodeAs<Func>("func")) {
-    static_cast<void>(registerFunc(result, func));
+    static_cast<void>(registerFunc(*func, *result.SourceManager));
   } else if (const auto ref = result.Nodes.getNodeAs<Ref>("ref")) {
-    registerRef(result, ref);
+    registerRef(*ref, *result.SourceManager);
   }
 }
 
-Funcs::iterator MatchHelper::registerFunc(const Result &result,
-                                          const FunctionDecl *func) const {
-  if (!func->isExternallyVisible() || func->isMain()) {
+Funcs::iterator MatchHelper::registerFunc(const FunctionDecl &func,
+                                          const SourceManager &sm) const {
+  if (!func.isExternallyVisible() || func.isMain()) {
     return {};
   }
 
-  const auto it = funcs.find(func->getNameAsString());
+  const auto name = func.getNameAsString();
+  const auto it = funcs.find(name);
   if (it == funcs.end()) {
-    const auto name = func->getNameAsString();
-    FuncInfo info(func, result.SourceManager);
-    return funcs.insert(std::make_pair(name, info)).first;
+    FuncInfo info(func, sm);
+    return funcs.emplace(name, info).first;
   }
-  it->second.processDeclaration(func, result.SourceManager);
+  it->second.processDeclaration(func, sm);
   return it;
 }
 
-void MatchHelper::registerRef(const Result &result,
-                              const DeclRefExpr *ref) const {
-  if (const auto func = ref->getDecl()->getAsFunction()) {
-    const auto it = registerFunc(result, func);
+void MatchHelper::registerRef(const DeclRefExpr &ref,
+                              const SourceManager &sm) const {
+  if (const auto func = ref.getDecl()->getAsFunction()) {
+    const auto it = registerFunc(*func, sm);
     if (it != Funcs::iterator()) {
-      it->second.registerRef(ref, result.SourceManager);
+      it->second.registerRef(ref, sm);
     }
   }
 }
@@ -101,7 +98,6 @@ public:
   Impl();
   ~Impl();
 
-public:
   MatchFinder &getMatchFinder();
 
 private:
@@ -118,14 +114,14 @@ Finder::Impl::Impl() : helper(funcs) {
 }
 
 Finder::Impl::~Impl() {
-  for (auto & func : funcs) {
+  for (auto &func : funcs) {
     const auto &funcInfo = func.second;
 
     if (funcInfo.isFullyDeclared()) {
       if (funcInfo.isUnused()) {
-        std::cout << funcInfo << ": unused\n";
+        llvm::outs() << funcInfo << ": unused\n";
       } else if (funcInfo.canBeMadeStatic()) {
-        std::cout << funcInfo << ": can be made static\n";
+        llvm::outs() << funcInfo << ": can be made static\n";
       }
     }
   }

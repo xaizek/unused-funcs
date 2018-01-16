@@ -24,20 +24,16 @@
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
 
-
 namespace {
-std::string getFilename(const clang::DeclRefExpr *ref,
-                        const clang::SourceManager *sm) {
-    clang::FullSourceLoc fullLoc(ref->getExprLoc(), *sm);
-    return sm->getFilename(fullLoc);
+std::string getFilename(const clang::DeclRefExpr &ref,
+                        const clang::SourceManager &sm) {
+  clang::FullSourceLoc fullLoc(ref.getExprLoc(), sm);
+  return sm.getFilename(fullLoc);
 }
-}  // namespace
+} // namespace
 
-
-RefInfo::RefInfo(const clang::DeclRefExpr *ref,
-                 const clang::SourceManager *sm)
-    : fileName(getFilename(ref, sm)) {
-}
+RefInfo::RefInfo(const clang::DeclRefExpr &ref, const clang::SourceManager &sm)
+    : fileName(getFilename(ref, sm)) {}
 
 bool RefInfo::isInThisUnit(const std::string &other) const {
   return other == fileName;

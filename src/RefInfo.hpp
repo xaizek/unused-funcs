@@ -23,16 +23,14 @@
 
 #include <string>
 
-
 namespace clang {
 class DeclRefExpr;
 class SourceManager;
 } // namespace clang
 
-
 class RefInfo {
 public:
-  RefInfo(const clang::DeclRefExpr *ref, const clang::SourceManager *sm);
+  RefInfo(const clang::DeclRefExpr &ref, const clang::SourceManager &sm);
 
 public:
   bool isInThisUnit(const std::string &other) const;

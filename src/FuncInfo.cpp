@@ -25,36 +25,34 @@
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
 
-#include <iostream>
-
-FuncInfo::FuncInfo(const clang::FunctionDecl *func,
-                   const clang::SourceManager *sm)
-    : name(func->getNameAsString()), lineNum(0U) {
+FuncInfo::FuncInfo(const clang::FunctionDecl &func,
+                   const clang::SourceManager &sm)
+    : name(func.getNameAsString()) {
   processDeclaration(func, sm);
 }
 
-void FuncInfo::processDeclaration(const clang::FunctionDecl *func,
-                                  const clang::SourceManager *sm) {
-  if (isFullyDeclared() || !func->isThisDeclarationADefinition()) {
+void FuncInfo::processDeclaration(const clang::FunctionDecl &func,
+                                  const clang::SourceManager &sm) {
+  if (isFullyDeclared() || !func.isThisDeclarationADefinition()) {
     return;
   }
 
-  clang::FullSourceLoc fullLoc(func->getNameInfo().getBeginLoc(), *sm);
-  fileName = sm->getFilename(fullLoc);
+  clang::FullSourceLoc fullLoc(func.getNameInfo().getBeginLoc(), sm);
+  fileName = sm.getFilename(fullLoc);
   lineNum = fullLoc.getSpellingLineNumber();
 }
 
 bool FuncInfo::isFullyDeclared() const { return lineNum != 0U; }
 
-void FuncInfo::registerRef(const clang::DeclRefExpr *ref,
-                           const clang::SourceManager *sm) {
+void FuncInfo::registerRef(const clang::DeclRefExpr &ref,
+                           const clang::SourceManager &sm) {
   calls.emplace_back(ref, sm);
 }
 
 bool FuncInfo::isUnused() const { return calls.empty(); }
 
 bool FuncInfo::canBeMadeStatic() const {
-  for (const auto & call : calls) {
+  for (const auto &call : calls) {
     if (!call.isInThisUnit(fileName)) {
       return false;
     }
@@ -62,6 +60,6 @@ bool FuncInfo::canBeMadeStatic() const {
   return true;
 }
 
-std::ostream &operator<<(std::ostream &os, const FuncInfo &fi) {
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const FuncInfo &fi) {
   return os << fi.fileName << ':' << fi.lineNum << ':' << fi.name;
 }

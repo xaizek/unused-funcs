@@ -20,6 +20,7 @@
 
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/Basic/Diagnostic.h>
+#include <clang/Frontend/FrontendActions.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
 #include <llvm/Support/CommandLine.h>
@@ -29,11 +30,11 @@
 namespace ct = clang::tooling;
 
 namespace {
-  class CustomDiagnosticConsumer: public clang::DiagnosticConsumer {
-  public:
-    bool IncludeInDiagnosticCounts() const override { return false; }
-  };
-}  // namespace
+class CustomDiagnosticConsumer : public clang::DiagnosticConsumer {
+public:
+  bool IncludeInDiagnosticCounts() const override { return false; }
+};
+} // namespace
 
 static llvm::cl::extrahelp commonHelp(ct::CommonOptionsParser::HelpMessage);
 
@@ -42,7 +43,6 @@ int main(int argc, const char *argv[]) {
   ct::CommonOptionsParser optionsParser(argc, argv, toolCategory);
   ct::ClangTool tool(optionsParser.getCompilations(),
                      optionsParser.getSourcePathList());
-
   CustomDiagnosticConsumer diagConsumer;
   tool.setDiagnosticConsumer(&diagConsumer);
 
